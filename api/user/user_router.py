@@ -21,7 +21,7 @@ router = APIRouter(
 )
 
 
-@router.post("/create", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/create", tags=["User"], status_code=status.HTTP_204_NO_CONTENT)
 def user_create(_user_create: user_schema.UserCreate, db: Session = Depends(get_db)):
     user = user_crud.create_user(db, user_create=_user_create)
 
@@ -32,7 +32,7 @@ def user_create(_user_create: user_schema.UserCreate, db: Session = Depends(get_
     # HTTPException 함수는 HTTP 프로토콜을 사용하는 웹 서버에서 발생할 수 있는 예외 상황을 처리하기 위한 함수
 
 
-@router.post("/login", response_model=user_schema.Token)
+@router.post("/login", tags=["User"], response_model=user_schema.Token)
 def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
@@ -59,7 +59,7 @@ def login_for_access_token(
     }
 
 
-@router.patch("/{username}", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch("/{username}", tags=["UserInfo"], status_code=status.HTTP_204_NO_CONTENT)
 def update(
     username: str, user_update: user_schema.UserUpdate, db: Session = Depends(get_db)
 ):
@@ -79,7 +79,7 @@ def update(
     return {"message": "Successfully updated user"}
 
 
-@router.patch("/updatepw/{username}")
+@router.patch("/updatepw/{username}", tags=["UserInfo"])
 def update_password(
     username: str,
     password_update: user_schema.PasswordUpdate,
@@ -95,3 +95,18 @@ def update_password(
     db.commit()
     db.refresh(user)
     return {"message": "Successfully updated password"}
+
+
+# @router.get("/Detail", tags=["UserInfo"])
+# def get_User(username: str, db: Session = Depends(get_db)):
+#     user = db.query(User).filter(User.name == username).first()
+#     return user
+
+
+@router.delete("/delete/{username}", tags=["UserInfo"])
+def delete_user(username: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    db.delete(user)
+    db.commit()
