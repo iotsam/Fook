@@ -1,5 +1,5 @@
 from passlib.context import CryptContext
-from sqlalchemy import Column, TEXT, BIGINT, VARCHAR, DATETIME
+from sqlalchemy import Column, TEXT, BIGINT, VARCHAR, DATETIME, BOOLEAN
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -26,3 +26,14 @@ class Questionboard(Base):
     subject = Column(VARCHAR, nullable=False)
     content = Column(TEXT, nullable=False)
     create_date = Column(DATETIME, nullable=False)
+
+
+class Comment(Base):
+    __tablename__ = "comment"
+
+    id = Column(BIGINT, primary_key=True, autoincrement=True, nullable=False)
+    username = Column(TEXT, nullable=False)
+    comment = Column(TEXT, nullable=False)
+    pri = Column(BOOLEAN, nullable=False)
+    create_date = Column(DATETIME, nullable=False)
+    pageid = Column(BIGINT, nullable=False)
