@@ -16,3 +16,7 @@ class QuestionUpdate(BaseModel):
 
 class QuestionDelete(BaseModel):
     question_id: int
+
+
+class Image(BaseModel):
+    url: str

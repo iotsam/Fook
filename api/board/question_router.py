@@ -1,14 +1,25 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from starlette import status
 from database import get_db
 from models import Questionboard
-from api.board.question_schema import QuestionCreate, QuestionUpdate
+from api.board.question_schema import QuestionCreate, QuestionUpdate, Image
+from fastapi.responses import JSONResponse, FileResponse
+import boto3
+from io import BytesIO
 
 
 router = APIRouter(
     prefix="/api/board",
 )
+
+
+# s3 = boto3.client(
+#     "s3",
+#     aws_access_key_id=S3_ACCESS_KEY,
+#     aws_secret_access_key=S3_SECRET_KET,
+#     region_name=S3_REGION,
+# )
 
 
 @router.post(
@@ -74,3 +85,48 @@ def delete_board(id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     db.delete(id)
     db.commit()
+
+
+# 이미지 업로드 관련 AWS
+# @router.post("/uploadfile")
+# async def upload_image(image: UploadFile = File(...)):
+#     content = await image.read()
+#     # 이미지를 S3에 업로드합니다.
+#     s3 = boto3.client(
+#         "s3",
+#         aws_access_key_id=S3_ACCESS_KEY,
+#         aws_secret_access_key=S3_SECRET_KET,
+#         region_name=S3_REGION,
+#     )
+#     s3_object = s3.put_object(Body=content, Bucket=S3_BUCKET_NAME, Key=image.filename)
+#     # S3에서 이미지 URL을 생성합니다.
+#     image_url = s3.generate_presigned_url(
+#         "get_object",
+#         Params={"Bucket": S3_BUCKET_NAME, "Key": image.filename},
+#         ExpiresIn=3600,
+#     )
+#     return {"url": image_url}
+
+
+# @router.post("/uploadfile/")
+# async def create_upload_file(file: UploadFile = File(...)):
+#     file_path = os.path.join("uploads", file.filename)
+#     with open(file_path, "wb") as buffer:
+#         shutil.copyfileobj(file.file, buffer)
+#     return {"filename": file.filename}
+
+
+# @router.get("/image/{filename}")
+# async def read_file(filename):
+#     file_path = os.path.join("uploads", filename)
+#     return FileResponse(file_path)
+
+
+# with open(f"{file.filename}", "wb") as buffer:
+#     buffer.write(file.file.read())
+
+# # 이미지 리사이징
+# with Image.open(file.filename) as im:
+#     size = (800, 800)
+#     im_resized = im.resize(size)
+#     im_resized.save(f"{file.filename}")

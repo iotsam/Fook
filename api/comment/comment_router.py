@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 from database import get_db
-from models import Comment, Questionboard
+from models import Comment
 from api.comment.comment_schema import CommentCreate, CommentUpdate
 
 router = APIRouter(
