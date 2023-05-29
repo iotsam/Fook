@@ -2,22 +2,22 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 from database import get_db
-from models import Comment
-from api.comment.comment_schema import CommentCreate, CommentUpdate
+from models import RecipeComment
+from api.comment.recipe_comment_schema import CommentCreate, CommentUpdate
 
 router = APIRouter(
-    prefix="/api/comment",
+    prefix="/api/recipecomment",
 )
 
 
 @router.post(
-    "/{username}/create", tags=["Comment"], status_code=status.HTTP_201_CREATED
+    "/{username}/create", tags=["RecipeComment"], status_code=status.HTTP_201_CREATED
 )
 def create_comment(
     Comment_Create: CommentCreate,
     db: Session = Depends(get_db),
 ):
-    comment = Comment(
+    comment = RecipeComment(
         username=Comment_Create.username,
         comment=Comment_Create.comment,
         pri=Comment_Create.pri,
@@ -34,16 +34,18 @@ def create_comment(
 
 
 @router.get(
-    "/getcomment/{username}", tags=["Comment"], status_code=status.HTTP_202_ACCEPTED
+    "/getcomment/{username}",
+    tags=["RecipeComment"],
+    status_code=status.HTTP_202_ACCEPTED,
 )
 def get_comment(db: Session = Depends(get_db)):
-    comment = db.query(Comment).all()
+    comment = db.query(RecipeComment).all()
     return comment
 
 
-@router.delete("/delete/{id}", tags=["Comment"])
+@router.delete("/delete/{id}", tags=["RecipeComment"])
 def delete_comment(id: int, db: Session = Depends(get_db)):
-    comment = db.query(Comment).filter(Comment.id == id).first()
+    comment = db.query(RecipeComment).filter(RecipeComment.id == id).first()
     if not comment:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found"
@@ -53,25 +55,13 @@ def delete_comment(id: int, db: Session = Depends(get_db)):
     return {"message": "Comment deleted successfully"}
 
 
-# @router.delete("/replydelete/{username}", tags=["Comment"])
-# def delete_comment(username: str, db: Session = Depends(get_db)):
-#     comment = db.query(Comment).filter(Comment.username == username).first()
-#     if not comment:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found"
-#         )
-#     db.delete(comment)
-#     db.commit()
-#     return {"message": "Comment deleted successfully"}
-
-
-@router.patch("/update/{id}", tags=["Comment"], status_code=status.HTTP_200_OK)
+@router.patch("/update/{id}", tags=["RecipeComment"], status_code=status.HTTP_200_OK)
 def question_update(
     id: int,
     comment_update: CommentUpdate,
     db: Session = Depends(get_db),
 ):
-    comment = db.query(Comment).filter(Comment.id == id).first()
+    comment = db.query(RecipeComment).filter(RecipeComment.id == id).first()
 
     if not comment:
         raise HTTPException(

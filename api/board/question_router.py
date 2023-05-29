@@ -2,24 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from starlette import status
 from database import get_db
-from models import Questionboard
-from api.board.question_schema import QuestionCreate, QuestionUpdate, Image
-from fastapi.responses import JSONResponse, FileResponse
-import boto3
-from io import BytesIO
+from models import Questionboard, User, Like
+from api.board.question_schema import (
+    QuestionCreate,
+    QuestionUpdate,
+    QuestionLike,
+)
 
 
 router = APIRouter(
     prefix="/api/board",
 )
-
-
-# s3 = boto3.client(
-#     "s3",
-#     aws_access_key_id=S3_ACCESS_KEY,
-#     aws_secret_access_key=S3_SECRET_KET,
-#     region_name=S3_REGION,
-# )
 
 
 @router.post(
@@ -50,7 +43,9 @@ def my_detail(username: str, db: Session = Depends(get_db)):
     return detail
 
 
-@router.patch("/update/{username}/{id}", status_code=status.HTTP_200_OK)
+@router.patch(
+    "/update/{username}/{id}", tags=["QAboard"], status_code=status.HTTP_200_OK
+)
 def question_update(
     username: str,
     id: int,
@@ -80,53 +75,96 @@ def question_update(
 # 게시물 삭제기능
 @router.delete("/delete/{id}", tags=["QAboard"])
 def delete_board(id: int, db: Session = Depends(get_db)):
-    id = db.query(Questionboard).filter(Questionboard.id == id).first()
-    if not id:
+    question = db.query(Questionboard).filter(Questionboard.id == id).first()
+    if not question:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    db.delete(id)
+    all_remove_like(db, question)
+    db.delete(question)
     db.commit()
 
 
-# 이미지 업로드 관련 AWS
-# @router.post("/uploadfile")
-# async def upload_image(image: UploadFile = File(...)):
-#     content = await image.read()
-#     # 이미지를 S3에 업로드합니다.
-#     s3 = boto3.client(
-#         "s3",
-#         aws_access_key_id=S3_ACCESS_KEY,
-#         aws_secret_access_key=S3_SECRET_KET,
-#         region_name=S3_REGION,
-#     )
-#     s3_object = s3.put_object(Body=content, Bucket=S3_BUCKET_NAME, Key=image.filename)
-#     # S3에서 이미지 URL을 생성합니다.
-#     image_url = s3.generate_presigned_url(
-#         "get_object",
-#         Params={"Bucket": S3_BUCKET_NAME, "Key": image.filename},
-#         ExpiresIn=3600,
-#     )
-#     return {"url": image_url}
+def all_remove_like(db: Session, question: Questionboard):
+    # Find all likes associated with the given question
+    likes = db.query(Like).filter(Like.question_id == question.id).all()
+
+    # Remove each like from the database
+    for like_entry in likes:
+        db.delete(like_entry)
+
+    # Update the like count of the question to reflect the removal of likes
+    question.like_count = 0
+
+    # Commit the changes to the database
+    db.commit()
 
 
-# @router.post("/uploadfile/")
-# async def create_upload_file(file: UploadFile = File(...)):
-#     file_path = os.path.join("uploads", file.filename)
-#     with open(file_path, "wb") as buffer:
-#         shutil.copyfileobj(file.file, buffer)
-#     return {"filename": file.filename}
+# 게시물 좋아요 기능
+@router.post("/like", tags=["Like"], status_code=status.HTTP_200_OK)
+def question_like(
+    user_id: int, question_like: QuestionLike, db: Session = Depends(get_db)
+):
+    question = (
+        db.query(Questionboard)
+        .filter(Questionboard.id == question_like.question_id)
+        .first()
+    )
+    if not question:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="데이터를 찾을 수 없습니다."
+        )
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="사용자를 찾을 수 없습니다."
+        )
+
+    add_like(db, question, user)
 
 
-# @router.get("/image/{filename}")
-# async def read_file(filename):
-#     file_path = os.path.join("uploads", filename)
-#     return FileResponse(file_path)
+def add_like(db: Session, question: Questionboard, user: User):
+    question.liked_likes.append(user)
+    question.like_count = len(question.likes)
+    db.commit()
 
 
-# with open(f"{file.filename}", "wb") as buffer:
-#     buffer.write(file.file.read())
+# 게시물 좋아요 해제 기능
+@router.delete("/removelike", tags=["Like"], status_code=status.HTTP_200_OK)
+def question_unlike(
+    user_id: int, question_like: QuestionLike, db: Session = Depends(get_db)
+):
+    question = (
+        db.query(Questionboard)
+        .filter(Questionboard.id == question_like.question_id)
+        .first()
+    )
+    if not question:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="데이터를 찾을 수 없습니다."
+        )
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="사용자를 찾을 수 없습니다."
+        )
 
-# # 이미지 리사이징
-# with Image.open(file.filename) as im:
-#     size = (800, 800)
-#     im_resized = im.resize(size)
-#     im_resized.save(f"{file.filename}")
+    remove_like(db, question, user)
+
+
+def remove_like(db: Session, question: Questionboard, user: User):
+    question.liked_likes.remove(user)
+    question.like_count = len(question.likes)
+    db.commit()
+
+
+# 게시물 카운터
+@router.get("/likeCount", tags=["Like"], status_code=status.HTTP_200_OK)
+def get_like_count(question_id: int, db: Session = Depends(get_db)):
+    question = db.query(Questionboard).filter(Questionboard.id == question_id).first()
+    if not question:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="데이터를 찾을 수 없습니다."
+        )
+    return {"likeCount": question.like_count}
+
+
+#

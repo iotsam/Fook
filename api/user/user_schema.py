@@ -25,3 +25,7 @@ class UserUpdate(BaseModel):
 
 class PasswordUpdate(BaseModel):
     password: str
+
+
+class UserLike(BaseModel):
+    User_id: int

@@ -8,7 +8,7 @@ from starlette import status
 from database import get_db
 from api.user import user_schema, user_crud
 from api.user.user_crud import pwd_context
-from models import User
+from models import Questionboard, User, RecipeLike, Recipe, Like
 import hashlib
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 
@@ -97,16 +97,61 @@ def update_password(
     return {"message": "Successfully updated password"}
 
 
-# @router.get("/Detail", tags=["UserInfo"])
-# def get_User(username: str, db: Session = Depends(get_db)):
-#     user = db.query(User).filter(User.name == username).first()
-#     return user
+@router.get("/get_id/{username}", tags=["UserInfo"])
+def get_User(username: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == username).all()
+    return user
 
 
 @router.delete("/delete/{username}", tags=["UserInfo"])
 def delete_user(username: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == username).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+
+    # Remove liked likes and update like count
+    for question in user.liked_questions:
+        all_remove_like(db, question)
+
+    # Remove recipe liked likes and update like count
+    for recipe in user.liked_recipe:
+        all_remove_recipelike(db, recipe)
+
     db.delete(user)
+    db.commit()
+    return {"message": "User deleted successfully"}
+
+
+# Rest of the code remains the same...
+
+
+def all_remove_like(db: Session, question: Questionboard):
+    # Find all likes associated with the given question
+    likes = db.query(Like).filter(Like.user_id == question.id).all()
+
+    # Remove each like from the database
+    for like_entry in likes:
+        db.delete(like_entry)
+
+    # Update the like count of the question to reflect the removal of likes
+    question.like_count = 0
+
+    # Commit the changes to the database
+    db.commit()
+
+
+def all_remove_recipelike(db: Session, recipe: Recipe):
+    # Find all likes associated with the given question
+    recipe_likes = db.query(RecipeLike).filter(RecipeLike.recipe_id == recipe.id).all()
+
+    # Remove each like from the database
+    for like_entry in recipe_likes:
+        db.delete(like_entry)
+
+    # Update the like count of the question to reflect the removal of likes
+    recipe.like_count = 0
+
+    # Commit the changes to the database
     db.commit()

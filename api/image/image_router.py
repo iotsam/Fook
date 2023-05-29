@@ -25,15 +25,15 @@ s3_client = boto3.client(
 )
 
 
-@router.post("/uploadfile")
+@router.post("/uploadfile", tags=["Image"])
 async def create_upload_file(
     filename: str = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    s3_client.upload_fileobj(file.file, S3_BUCKET_NAME, file.filename)
+    s3_client.upload_fileobj(file.file, S3_BUCKET_NAME, filename)  # 파일명 변경
 
-    file_url = f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{file.filename}"
+    file_url = f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{filename}"  # 파일명 변경
     image = Images(filename=filename, url=file_url)
     db.add(image)
     db.commit()
