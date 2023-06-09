@@ -43,6 +43,7 @@ def my_detail(username: str, db: Session = Depends(get_db)):
     return detail
 
 
+# 게시글 수정
 @router.patch(
     "/update/{username}/{id}", tags=["QAboard"], status_code=status.HTTP_200_OK
 )

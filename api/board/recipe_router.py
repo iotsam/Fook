@@ -44,7 +44,7 @@ def my_detail(username: str, db: Session = Depends(get_db)):
 @router.patch(
     "/update/{username}/{id}", tags=["Recipe"], status_code=status.HTTP_200_OK
 )
-def question_update(
+def recipe_update(
     username: str,
     id: int,
     recipe_update: RecipeUpdate,

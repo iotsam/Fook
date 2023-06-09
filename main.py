@@ -26,7 +26,7 @@ Session = sessionmaker(bind=engineconn)
 session = Session()
 
 
-origins = ["http://localhost", "http://1.252.156.171/:3000", "http://localhost:3002"]
+origins = ["http://localhost", "http://1.252.156.171/:3000", "http://localhost:3001"]
 # 프론트의 react 주소를 알려줌.
 
 app.add_middleware(
