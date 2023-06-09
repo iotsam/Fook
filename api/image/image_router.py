@@ -12,8 +12,8 @@ router = APIRouter(
 )
 
 S3_BUCKET_NAME = "learntest11"
-S3_ACCESS_KEY = "AKIAZF522S5L7KDOXYXL"
-S3_SECRET_KET = "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"
+S3_ACCESS_KEY = ""
+S3_SECRET_KET = ""
 S3_REGION = "ap-northeast-2"
 
 
