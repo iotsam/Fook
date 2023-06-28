@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-DB_URL = "mysql+pymysql://foodbook:foodbook@iotsam.com:3306/foodbook"
+DB_URL = "mysql+pymysql://root:root@localhost:3306/fook_db"
 
 
 def get_db():

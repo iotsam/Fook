@@ -11,9 +11,9 @@ router = APIRouter(
     prefix="/api/image",
 )
 
-S3_BUCKET_NAME = "learntest11"
-S3_ACCESS_KEY = ""
-S3_SECRET_KET = ""
+S3_BUCKET_NAME = "fookbucket"
+S3_ACCESS_KEY = "AKIAZ54AIJIZZGJ6OBFV"
+S3_SECRET_KET = "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"
 S3_REGION = "ap-northeast-2"
 
 

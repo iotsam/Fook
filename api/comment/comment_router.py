@@ -53,18 +53,6 @@ def delete_comment(id: int, db: Session = Depends(get_db)):
     return {"message": "Comment deleted successfully"}
 
 
-# @router.delete("/replydelete/{username}", tags=["Comment"])
-# def delete_comment(username: str, db: Session = Depends(get_db)):
-#     comment = db.query(Comment).filter(Comment.username == username).first()
-#     if not comment:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found"
-#         )
-#     db.delete(comment)
-#     db.commit()
-#     return {"message": "Comment deleted successfully"}
-
-
 @router.patch("/update/{id}", tags=["Comment"], status_code=status.HTTP_200_OK)
 def question_update(
     id: int,
